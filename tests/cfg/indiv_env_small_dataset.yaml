@@ -1,0 +1,16 @@
+hydra:
+  run:
+    dir: tests/outputs/
+
+defaults:
+  - base_config # a structured config defined in retailsynth.config to validate parameters
+  - optional synthetic_data: synthetic_data.yaml
+  - _self_
+
+raw_data:
+  raw_data_path: tests/data
+  customer_table_name: customer.csv
+  product_table_name: product.csv
+  transaction_table_name: test_data.csv
+  if_local_data: True
+

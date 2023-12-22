@@ -1,0 +1,42 @@
+hydra:
+  run:
+    dir: analysis_workflow/3_scenario_analysis/outputs
+  job:
+    chdir: True
+
+defaults:
+  - base_config # a structured config defined in retailsynth.config to validate parameters
+  - optional synthetic_data: synthetic_data_params.yaml
+  - _self_
+
+# use the following to override the default
+paths:
+  processed_data: data/processed/synthetic_data_scenarios/
+  txns_array_path: data/processed/synthetic_data_scenarios/txns_array/
+  store_feature_path: data/processed/synthetic_data_scenarios/store_features/
+  category_feature_path: data/processed/synthetic_data_scenarios/category_features/
+  product_feature_path: data/processed/synthetic_data_scenarios/product_features/
+
+
+synthetic_data:
+  synthetic_data_setup:
+    random_seed: 3
+    store_util_marketing_feature_mode: "discount"
+    utility_clip_percentile: 99
+    store_visit_theta_u:
+      _target_: numpyro.distributions.Uniform
+      low: 0
+      high: 0
+    store_visit_gamma_0_store:
+      _target_: numpyro.distributions.Gumbel
+      loc: -1.85
+      scale: 0.1
+    store_visit_gamma_1_store:
+      _target_: numpyro.distributions.TruncatedNormal
+      loc: 0.1
+      scale: 0.05
+      low: 0
+    store_visit_gamma_2_store:
+      _target_: numpyro.distributions.Uniform
+      low: 0
+      high: 0.001

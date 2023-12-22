@@ -1,0 +1,12 @@
+hydra:
+  run:
+    dir: analysis_workflow/2_synthesizer_calibration/outputs
+  job:
+    chdir: True
+
+defaults:
+  - base_config # a structured config defined in retailsynth.config to validate parameters
+  - _self_
+
+n_customers_sampled: 100
+n_workers: 4

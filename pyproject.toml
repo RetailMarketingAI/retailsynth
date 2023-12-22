@@ -1,0 +1,96 @@
+[tool.poetry]
+name = "retailsynth"
+version = "0.2.0"
+description = "Retail Data Synthesizer"
+authors = ["Yu Xia", "Ali Arian", "Sriram Narayanamoorthy", "Joshua Mabry", ]
+readme = "README.md"
+license = "Apache-2.0"
+repository = "https://github.com/Bain/retmar"
+
+
+[tool.poetry.dependencies]
+hydra-core = "^1.3.1"
+numba = "^0.56.4"
+pandas = "^1.5.2"
+pyarrow = ">=14.0.1"
+pydantic = "^1.10.4"
+python = ">=3.10, <3.11"
+scikit-learn = "^1.2.0"
+matplotlib = "^3.7.0"
+statsmodels = "^0.13.5"
+composeml = "^0.10.1"
+completejourney-py = "^0.0.3"
+doubleml = "^0.6.0"
+ipywidgets = "^8.0.6"
+dask = { extras = ["distributed"], version = "^2023.4.1" }
+xarray = "^2023.4.2"
+pathlib = "^1.0.1"
+jax = "^0.4.14"
+jaxlib = "^0.4.14"
+numpyro = "^0.12.1"
+sparse = "^0.14.0"
+zarr = "^2.16.1"
+pytest-ordering = "^0.6"
+pandera = "^0.17.2"
+black = "^23.9.1"
+tqdm = "^4.66.1"
+altair = "^5.1.2"
+vega-datasets = "^0.9.0"
+vegafusion = { extras = ["embed"], version = "^1.4.2" }
+vl-convert-python = ">=1.1.0"
+seaborn = "^0.13.0"
+sdmetrics = "^0.12.1"
+hydra-optuna-sweeper = "^1.2.0"
+mlxtend = "^0.23.0"
+
+
+[tool.poetry.group.dev.dependencies]
+isort = "^5.13.2"
+git-lfs = "^1.6"
+ipdb = "^0.13.13"
+ipykernel = "^6.20.2"
+ipython = "^8.8.0"
+jupyterlab = "^3.5.3"
+jupytext = "^1.14.5"
+nbval = "^0.10.0"
+pre-commit = "^2.21.0"
+pytest = "^7.2.1"
+pytest-cov = "^4.0.0"
+setuptools = "^66.0.0"
+wheel = "^0.38.4"
+codespell = "^2.2.4"
+vulture = "^2.7"
+nbqa = "^1.7.0"
+ruff = "^0.0.261"
+mypy = "^1.3.0"
+no-implicit-optional = "^1.3"
+
+[tool.jupytext]
+formats = ["ipynb", "md"]
+
+[tool.pytest.ini_options]
+filterwarnings = "ignore::DeprecationWarning"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.ruff]
+# Increase the maximum line length to 400 characters to avoid conflict with black.
+line-length = 400
+
+[tool.ruff.pydocstyle]
+convention = "numpy"
+
+[tool.pydocstyle]
+exclude = ["tests/*, examples/*, docs/*, *.*config.py"]
+
+[tool.codespell]
+ignore-words-list = "mape, smap, nd"
+skip = ".venv,.pytest_cache,.ruff_cahce,./.git"
+
+[tool.vulture]
+make_whitelist = true
+min_confidence = 90
+paths = ["src"]
+verbose = false

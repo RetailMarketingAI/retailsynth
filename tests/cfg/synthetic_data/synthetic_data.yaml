@@ -1,0 +1,98 @@
+sample_time_steps: 2
+synthetic_data_setup:
+  n_customer: 10
+  n_category: 4
+  n_product: 20
+  category_product_count: [ 6, 9, 2, 3]
+  store_util_marketing_feature_mode: "random"
+  random_seed: 0
+  random_seed_range: 100
+  discount_depth_distribution:
+    _target_: numpyro.distributions.TruncatedNormal
+    loc: 0
+    scale: 1
+    low: 0.0
+    high: 0.0 
+  discount_state_a_01:
+    _target_: numpyro.distributions.Beta
+    concentration0: 1
+    concentration1: 5
+  discount_state_a_11:
+    _target_: numpyro.distributions.Beta
+    concentration0: 5
+    concentration1: 1
+  # coefficients to compute product price
+  price_alpha_i0:
+    _target_: numpyro.distributions.LogNormal
+    loc: 0.8
+    scale: 0.8
+  price_alpha_1:
+    _target_: numpyro.distributions.Normal
+    loc: 0.4
+    scale: 0
+  lowest_price: 0.01
+
+  # coefficients to compute product utility
+  utility_beta_ui_z:
+    _target_: numpyro.distributions.Normal
+    loc: 0
+    scale: 1
+  utility_beta_ui_x:
+    _target_: numpyro.distributions.Normal
+    loc: 0.8
+    scale: 0.9
+  utility_beta_i_w:
+    _target_: numpyro.distributions.TruncatedNormal
+    loc: 1
+    scale: 1.342
+    high: 0 
+  utility_c: -1.7
+  utility_beta_u_w:
+    _target_: numpyro.distributions.TruncatedNormal
+    loc: 1
+    scale: 1.095
+    high: 0
+  utility_clip_percentile: 99.9
+  utility_error_distribution: 
+    _target_: numpyro.distributions.Gumbel
+    loc: 0
+    scale: 1
+  
+  # coefficients to compute category utility
+  category_choice_gamma_0j_cate:
+    _target_: numpyro.distributions.Normal
+    loc: -3.6
+    scale: 1.2
+  category_choice_gamma_1j_cate:
+    _target_: numpyro.distributions.Normal
+    loc: -0.07
+    scale: 0.0
+  
+  # coefficients to compute store visit probability
+  store_visit_theta_u: 
+    _target_: numpyro.distributions.Uniform
+    low: 0
+    high: 1
+  store_visit_gamma_0_store: 
+    _target_: numpyro.distributions.Normal
+    loc: 0
+    scale: 1
+  store_visit_gamma_1_store: 
+    _target_: numpyro.distributions.Normal
+    loc: 0
+    scale: 1
+  store_visit_gamma_2_store:
+    _target_: numpyro.distributions.Normal
+    loc: 0
+    scale: 1
+
+  # coefficients to compute product demand
+  purchase_quantity_gamma_0i_prod: 
+    _target_: numpyro.distributions.Normal
+    loc: -40
+    scale: 1
+  purchase_quantity_gamma_1i_prod:
+    _target_: numpyro.distributions.TruncatedNormal
+    loc: 0
+    scale: 0.001
+    low: 0

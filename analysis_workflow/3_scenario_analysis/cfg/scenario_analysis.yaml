@@ -1,0 +1,86 @@
+hydra:
+  run:
+    dir: analysis_workflow/3_scenario_analysis/outputs
+  job:
+    chdir: True
+
+scenarios:
+  I: # high-frequency, low-discount policy
+    synthetic_data:
+      synthetic_data_setup:
+        discount_depth_distribution:
+          _target_: numpyro.distributions.Beta
+          concentration1: 5 # alpha, as in the beta distribution
+          concentration0: 95 # beta, as in the beta distribution
+        discount_state_a_01:
+          _target_: numpyro.distributions.Beta
+          concentration1: 60
+          concentration0: 40
+        discount_state_a_11:
+          _target_: numpyro.distributions.Beta
+          concentration1: 60
+          concentration0: 40
+
+  II: # low-frequency, medium-discount policy
+    synthetic_data:
+      synthetic_data_setup:
+        discount_depth_distribution:
+          _target_: numpyro.distributions.Beta
+          concentration1: 10 # alpha, as in the beta distribution
+          concentration0: 90 # beta, as in the beta distribution
+        discount_state_a_01:
+          _target_: numpyro.distributions.Beta
+          concentration1: 30
+          concentration0: 70
+        discount_state_a_11:
+          _target_: numpyro.distributions.Beta
+          concentration1: 30
+          concentration0: 70
+
+  III: # high-frequency medium discount policy
+    synthetic_data:
+      synthetic_data_setup:
+        discount_depth_distribution:
+          _target_: numpyro.distributions.Beta
+          concentration1: 25 # alpha, as in the beta distribution
+          concentration0: 75 # beta, as in the beta distribution
+        discount_state_a_01:
+          _target_: numpyro.distributions.Beta
+          concentration1: 60
+          concentration0: 40
+        discount_state_a_11:
+          _target_: numpyro.distributions.Beta
+          concentration1: 60
+          concentration0: 40
+
+  IV: # low-frequency, high-discount policy
+    synthetic_data:
+      synthetic_data_setup:
+        discount_depth_distribution:
+          _target_: numpyro.distributions.Beta
+          concentration1: 50 # alpha, as in the beta distribution
+          concentration0: 50 # beta, as in the beta distribution
+        discount_state_a_01:
+          _target_: numpyro.distributions.Beta
+          concentration1: 30
+          concentration0: 70
+        discount_state_a_11:
+          _target_: numpyro.distributions.Beta
+          concentration1: 30
+          concentration0: 70
+
+  V: # high-frequency, high-discount policy
+    synthetic_data:
+      synthetic_data_setup:
+        discount_depth_distribution:
+          _target_: numpyro.distributions.Beta
+          concentration1: 40 # alpha, as in the beta distribution
+          concentration0: 60 # beta, as in the beta distribution
+        discount_state_a_01:
+          _target_: numpyro.distributions.Beta
+          concentration1: 60
+          concentration0: 40
+        discount_state_a_11:
+          _target_: numpyro.distributions.Beta
+          concentration1: 60
+          concentration0: 40

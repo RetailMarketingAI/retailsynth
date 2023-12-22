@@ -1,0 +1,19 @@
+hydra:
+  run:
+    dir: analysis_workflow/2_synthesizer_calibration/outputs
+  job:
+    chdir: True
+
+defaults:
+  - base_config # a structured config defined in retailsynth.config to validate parameters
+  - optional synthetic_data: synthetic_data_params.yaml
+  - _self_
+
+# use the following to override the default
+paths:
+  processed_data: data/processed/synthetic_data_calib/
+  txns_array_path: data/processed/synthetic_data_calib/txns_array/
+  store_feature_path: data/processed/synthetic_data_calib/store_features/
+  category_feature_path: data/processed/synthetic_data_calib/category_features/
+  product_feature_path: data/processed/synthetic_data_calib/product_features/
+

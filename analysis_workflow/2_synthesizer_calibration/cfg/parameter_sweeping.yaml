@@ -1,0 +1,48 @@
+# This yaml file is used in the `parameter_sweeping.py` to find the optimal parameters
+# to calibrate the synthesizer to the real datasets
+
+# To start a sweeping, run command `python analysis_workflow/2_synthesizer_calibration/2_parameter_sweeping.py`
+
+defaults:
+  - base_config # a structured config defined in retailsynth.config to validate parameters
+  - optional synthetic_data: synthetic_data_params.yaml
+  - _self_
+  - override hydra/sweeper: optuna
+
+hydra:
+  run:
+    dir: analysis_workflow/2_synthesizer_calibration/outputs
+  job:
+    chdir: True
+  mode: MULTIRUN
+  sweeper:
+    sampler:
+      _target_: optuna.samplers.TPESampler
+      seed: 0
+    direction: maximize
+    # specifies the optimization target
+    # supported options include "best_category_fit", "best_product_fit", " best_overall_fit", "best_store_fit", and "best_demand_fit".
+    study_name: best_category_fit
+    storage: null
+    n_trials: 1  # specifies the maximum number of runs to perform in a sweep
+    n_jobs: 1  # specifies how many trials to run in parallel
+    params:
+      # specify the parameters to sweep here.
+      # For example, the following two parameters are key ones to compute the category utility
+      synthetic_data.synthetic_data_setup.category_choice_gamma_0j_cate.loc: range(-5, -4.4, step=0.2)
+      synthetic_data.synthetic_data_setup.category_choice_gamma_0j_cate.scale: 0.1,0.5
+  
+  sweep:
+    # sweeping report will be stored locally in the following directory
+    dir: analysis_workflow/2_synthesizer_calibration/multirun/${hydra.sweeper.study_name}/${now:%Y-%m-%d_%H-%M-%S}/
+    subdir: ${hydra.job.num}
+
+# use the following to override the default
+paths:
+  processed_data: data/processed/synthetic_data_calib/
+  txns_array_path: data/processed/synthetic_data_calib/txns_array/
+  store_feature_path: data/processed/synthetic_data_calib/store_features/
+  category_feature_path: data/processed/synthetic_data_calib/category_features/
+  product_feature_path: data/processed/synthetic_data_calib/product_features/
+
+
