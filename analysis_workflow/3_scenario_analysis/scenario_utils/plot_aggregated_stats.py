@@ -94,9 +94,10 @@ def get_discount_summary_df(synthesizers: list, labels: list):
 def plot_discount_state_proportion(
     synthesizers: list, synthesizers_names: list, ax=None
 ):
-    """compare proportion of products in discounts for different pricing strategies
+    """Compare proportion of products in discounts for different pricing strategies.
 
     Parameters
+    ----------
         synthesizers (list): list of synthesizer running different pricing strategies
         synthesizers_names (list): list of names of different pricing strategies
     """
@@ -118,7 +119,7 @@ def plot_discount_state_proportion(
 def plot_discount_distribution(
     synthesizers: list, synthesizers_names: list, ax=None, binwidth=0.05
 ):
-    """plot the actual discount that the synthesizer generate internally
+    """Plot the actual discount that the synthesizer generate internally.
 
     Parameters
     ----------

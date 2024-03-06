@@ -10,14 +10,15 @@ from sdmetrics.single_column import KSComplement, RangeCoverage
 
 
 def gather_summary_statistics(data: pd.DataFrame, target_column: str):
-    """compute summary statistics
+    """Compute summary statistics.
 
     Parameters
     ----------
         data (pd.DataFrame): decision dataframe with identifiers of week, customer, item (store / category / product)
         target_column (str): column to collect summary statistics
 
-    Returns:
+    Returns
+    -------
         dictionary: dictionary with summary statistics
     """
     mean = data[target_column].mean()
@@ -26,13 +27,14 @@ def gather_summary_statistics(data: pd.DataFrame, target_column: str):
 
 
 def format_stats_dict(result: Dict) -> str:
-    """Convert dictionary of summary statistics to readable string
+    """Convert dictionary of summary statistics to readable string.
 
     Parameters
     ----------
         result (Dict): dictionary of summary statistics
 
-    Returns:
+    Returns
+    -------
         str: formatted summary statistics
     """
     string = ""
@@ -47,7 +49,7 @@ def gather_report_one_step(
     step_name: str = "store_visit",
     target_name: str = "store_visit",
 ) -> str:
-    """Prepare summary statistics report for one decision step
+    """Prepare summary statistics report for one decision step.
 
     Parameters
     ----------
@@ -69,14 +71,15 @@ def gather_report_one_step(
 
 
 def gather_summary_stats_report(results: List, labels: List):
-    """prepare summary report for all steps, store visit, category choice, product choice and product demand
+    """Prepare summary report for all steps, store visit, category choice, product choice and product demand.
 
     Parameters
     ----------
         results (List): list of datasets to gather summary statistics
         labels (List): list of names of the datasets
 
-    Returns:
+    Returns
+    -------
         str: a complete report
     """
     report = ""
@@ -105,7 +108,7 @@ def compute_similarity_metrics(real_data, synthetic_data):
 
 @dataclass
 class Plotter:
-    """plotting objects to get figures of distribution comparison"""
+    """plotting objects to get figures of distribution comparison."""
 
     results: List[Dict]
     labels: List[str]

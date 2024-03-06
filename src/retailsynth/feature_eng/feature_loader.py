@@ -4,7 +4,7 @@ import pandas as pd
 
 
 class FeatureLoader:
-    """Object to load feature arrays from a given storage directory
+    """Object to load feature arrays from a given storage directory.
 
     Attributes
     ----------

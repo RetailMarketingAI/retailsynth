@@ -1,4 +1,5 @@
 import jax.numpy as jnp
+from jax import random
 import pytest
 
 from retailsynth.synthesizer.config import initialize_synthetic_data_setup
@@ -36,8 +37,13 @@ def probability_for_each_step(
 ):
     discount = data_synthesizer.sample_discount()
     product_price = data_synthesizer.compute_product_price(discount)
-    discount = data_synthesizer.sample_discount()
-    product_utility = data_synthesizer.compute_product_utility(product_price)
+    coupon = data_synthesizer.sample_coupon()
+    product_price_with_coupon = data_synthesizer.compute_product_price_with_coupon(
+        product_price, coupon
+    )
+    product_utility = data_synthesizer.compute_product_utility(
+        product_price_with_coupon
+    )
     category_utility = data_synthesizer.compute_category_utility(product_utility)
 
     product_choice_prob = (
@@ -50,7 +56,9 @@ def probability_for_each_step(
             category_utility
         )
     )
-    marketing_feature = data_synthesizer.sample_marketing_feature()
+    marketing_feature = data_synthesizer.sample_marketing_feature(
+        discount=discount, coupon=coupon
+    )
     store_visit_prob = data_synthesizer.compute_store_visit_probability(
         category_utility,
         initial_store_visit_prob,
@@ -127,6 +135,23 @@ def test_generate_product_price(data_synthesizer):
     assert (product_price > 0).all()
 
 
+def test_generate_product_price_with_coupon(data_synthesizer):
+    discount = data_synthesizer.sample_discount()
+    coupon = random.uniform(
+        data_synthesizer.random_seed,
+        shape=(data_synthesizer.n_customer, data_synthesizer.n_category),
+    )
+    product_price = data_synthesizer.compute_product_price(discount)
+    product_price_with_coupon = data_synthesizer.compute_product_price_with_coupon(
+        product_price, coupon
+    )
+    assert product_price_with_coupon.shape == (
+        data_synthesizer.n_customer,
+        data_synthesizer.n_product,
+    )
+    assert (product_price_with_coupon > 0).all()
+
+
 def test_prob_for_each_step(data_synthesizer, probability_for_each_step):
     (
         store_visit_prob,
@@ -201,8 +226,9 @@ def test_joint_decision(data_synthesizer, decision_for_each_step):
 
 def test_store_visit_elasticity(data_synthesizer, initial_store_visit_prob):
     discount = data_synthesizer.sample_discount()
+    coupon = jnp.zeros((data_synthesizer.n_customer, data_synthesizer.n_product))
     store_visit_elasticity = data_synthesizer.compute_store_visit_elasticity(
-        initial_store_visit_prob, discount=discount
+        initial_store_visit_prob, discount=discount, coupon=coupon
     )
     assert store_visit_elasticity.shape == (
         data_synthesizer.n_customer,
@@ -266,8 +292,9 @@ def test_overall_elasticity(data_synthesizer, probability_for_each_step):
         product_demand_mean,
     ) = probability_for_each_step
     discount = data_synthesizer.sample_discount()
+    coupon = jnp.zeros((data_synthesizer.n_customer, data_synthesizer.n_product))
     store_visit_elasticity = data_synthesizer.compute_store_visit_elasticity(
-        store_visit_prob, discount=discount
+        store_visit_prob, discount=discount, coupon=coupon
     )
     category_elasticity = data_synthesizer.compute_category_elasticity(
         product_choice_prob, category_choice_prob
@@ -296,6 +323,7 @@ def test_sample_trajectory(data_synthesizer, sample_config):
         trajectory,
         price_record,
         discount_record,
+        price_with_coupon_record,
     ) = data_synthesizer.sample_trajectory(
         n_week,
     )
@@ -320,6 +348,13 @@ def test_sample_trajectory(data_synthesizer, sample_config):
     )
     assert check_array_between_0_1(discount_record)
 
+    assert price_with_coupon_record.shape == (
+        n_week,
+        data_synthesizer.n_customer,
+        data_synthesizer.n_product,
+    )
+    assert (price_with_coupon_record > 0).all()
+
 
 def test_discount_state(data_synthesizer):
     discount = jnp.array(data_synthesizer.choice_decision_stats["discount"])
@@ -334,18 +369,25 @@ def test_df_conversion(data_synthesizer, sample_config):
         trajectory,
         price_record,
         discount_record,
+        price_with_coupon_record,
     ) = data_synthesizer.sample_trajectory(
         n_week,
     )
 
     trx_df = data_synthesizer.convert_trajectory_to_df(
-        trajectory, price_record, discount_record
+        trajectory, price_record, discount_record, price_with_coupon_record
     )
     customer_df = data_synthesizer.convert_customer_info_to_df()
     product_df = data_synthesizer.convert_product_info_to_df()
 
     assert set(trx_df.columns) == set(
-        ["item_qty", "discount_portion", "unit_price", "sales_amt"]
+        [
+            "item_qty",
+            "discount_portion",
+            "unit_price",
+            "sales_amt",
+            "unit_price_with_coupon",
+        ]
     )
 
     assert len(customer_df) == data_synthesizer.n_customer

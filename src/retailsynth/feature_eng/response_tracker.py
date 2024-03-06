@@ -6,8 +6,7 @@ import xarray as xr
 
 
 class ResponseTracker:
-    """This object records the customers (and products) that have positive decisions on the choice events for each step
-    so that the multistage model will only proceed to the next step with selected customers and products at each time t.
+    """Record the customers (and products) that have positive decisions on the choice events for each step so that the multistage model will only proceed to the next step with selected customers and products at each time t.
 
     Attributes
     ----------
@@ -43,7 +42,7 @@ class ResponseTracker:
         self.reset()
 
     def reset(self):
-        """reset the object for new predictions"""
+        """Reset the object for new predictions."""
         self.selected_time = self.time_list
         self.selected_customer = self.customer_list
         self.selected_product = self.product_list
@@ -80,9 +79,7 @@ class ResponseTracker:
         category_choice_result: xr.DataArray,
         category_idx: Optional[int] = None,
     ):
-        """
-         Update selected time, customers, and products based on if customer
-         purchased in the category using category choice result for a single input category with index category_idx
+        """Update selected time, customers, and products based on if customer purchased in the category using category choice result for a single input category with index category_idx.
 
         Parameters
         ----------
@@ -132,25 +129,28 @@ class ResponseTracker:
         self.selected_product = choice_df["product_nbr"].values.tolist()
 
     def get_selected_times(self) -> xr.DataArray:
-        """return selected times to be used as a filter to extract sample of features
+        """Return selected times to be used as a filter to extract sample of features.
 
-        Returns:
+        Returns
+        -------
             xr.DataArray: the selected times
         """
         return xr.DataArray(self.selected_time)
 
     def get_selected_customers(self) -> xr.DataArray:
-        """return selected customers to be used as a filter to extract sample of features
+        """Return selected customers to be used as a filter to extract sample of features.
 
-        Returns:
+        Returns
+        -------
             xr.DataArray: the selected customers
         """
         return xr.DataArray(self.selected_customer)
 
     def get_selected_products(self) -> xr.DataArray:
-        """return selected products to be used as a filter to extract sample of features
+        """Return selected products to be used as a filter to extract sample of features.
 
-        Returns:
+        Returns
+        -------
             xr.DataArray: the selected products
         """
         return xr.DataArray(self.selected_product)

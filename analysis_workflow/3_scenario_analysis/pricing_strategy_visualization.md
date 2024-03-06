@@ -139,7 +139,7 @@ fig_population, axes_population = plot_purchase_summary_for_all_customers(
 
 ## Segment Analysis Based on Price Sensitivity
 
-Here we perform an analysis of customer segments analysis. The segments are determined by the customer's latent price sensitivity, as defined inside the synthesizer. We have: 
+Here we perform an analysis of customer segments. The segments are determined by the customer's latent price sensitivity, as defined inside the synthesizer. We have: 
 
 1. 'High sensitivity', who are highly reactive to price change; 
 2. 'Medium sensitivity' moderately responsive, 

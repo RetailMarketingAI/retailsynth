@@ -33,14 +33,13 @@ def run_synthesizer(
         trajectory,
         price_record,
         discount_record,
+        price_with_coupon_record,
     ) = synthesizer.sample_trajectory(
         n_week,
     )
     # prepare output dataframe
     trx_df = synthesizer.convert_trajectory_to_df(
-        trajectory,
-        price_record,
-        discount_record,
+        trajectory, price_record, discount_record, price_with_coupon_record
     )
     customer_df = synthesizer.convert_customer_info_to_df()
     product_df = synthesizer.convert_product_info_to_df()

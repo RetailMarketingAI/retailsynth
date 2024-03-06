@@ -19,7 +19,7 @@ class TransformerMixin(object):
         self.dataset: RetailDataSet
 
     def filter_invalid_transactions(self):
-        """Filter out transactions with negative quantity or negative sales amount"""
+        """Filter out transactions with negative quantity or negative sales amount."""
         # filter out rows with non-positive quantity sold
         self.dataset.transactions = self.dataset.transactions[
             (self.dataset.transactions["item_qty"] > 0)
@@ -84,7 +84,6 @@ class TransformerMixin(object):
 
     def add_category_id(self):
         """Assign category id to products with the same category desc."""
-
         categories = self.dataset.products.category_desc.unique()
         categories = pd.DataFrame(
             np.vstack((categories, np.arange(len(categories)))).T,
@@ -149,7 +148,6 @@ class TransformerMixin(object):
         raw_transaction(processed)
             resulting dataframe contains two extra columns: unit price and discount portion
         """
-
         # use dealt price / quantity to get unit price
         self.dataset.transactions["unit_price"] = (
             self.dataset.transactions["sales_amt"]
@@ -218,7 +216,6 @@ class TransformerMixin(object):
         products(processed): pd.DataFrame
             the output product hierarchy table, with only products shown in the filtered transaction table
         """
-
         # remove unused records from product and customer table
         self.dataset.customers = self.dataset.customers[
             self.dataset.customers.customer_key.isin(
@@ -320,7 +317,6 @@ class TransformerMixin(object):
         BaseInputDataset
             The transformed datasets.
         """
-
         (
             self.filter_invalid_transactions()
             .drop_duplicate_product_id()

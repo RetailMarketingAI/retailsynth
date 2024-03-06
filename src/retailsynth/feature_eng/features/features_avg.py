@@ -15,7 +15,7 @@ class AveragePurchaseQuantity(BaseFeature):
     def get_historical_feature(
         self, customer_index: np.array = None, item_index: np.array = None
     ) -> np.ndarray:
-        """Return the cumulative average quantity of each customer for each item, filling missing values with 1s
+        """Return the cumulative average quantity of each customer for each item, filling missing values with 1s.
 
         Parameters
         ----------

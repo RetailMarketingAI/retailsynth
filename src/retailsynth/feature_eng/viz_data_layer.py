@@ -47,7 +47,7 @@ class FeatureVizDataLayer:
         category_product_mapping,
         data_path,
     ):
-        """Query the feature store for features on the store, category, and product level in a data frame format
+        """Query the feature store for features on the store, category, and product level in a data frame format.
 
         Parameters
         ----------

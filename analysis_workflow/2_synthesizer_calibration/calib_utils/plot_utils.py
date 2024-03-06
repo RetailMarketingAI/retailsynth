@@ -26,12 +26,12 @@ REQUIRED_PRODUCT_SCHEMA = DataFrameSchema(
 
 
 def make_plot_data(transactions, products=None):
-    """
-    This utility function aggregates the transaction data to a weekly level. Each row of data
-        is at a product-week level with the following features
-            - total product demand normalized by the number of customers visiting the store by week  + change in this
-            value from its mean across weeks
-            - average unit price for the product for the week + change in this value from its mean across weeks
+    """Aggregate the transaction data to a weekly level.
+
+    Each row of data is at a product-week level with the following features
+        - total product demand normalized by the number of customers visiting the store by week  + change in this
+        value from its mean across weeks
+        - average unit price for the product for the week + change in this value from its mean across weeks
     Additional useful product metadata (category, subcategory) is also added to the dataframe
 
     Parameters
@@ -47,7 +47,6 @@ def make_plot_data(transactions, products=None):
     weekly_aggregates: DataFrame with demand and price features aggregated at product-week level
 
     """
-
     # Validate dataframes against specified schema
     transactions = REQUIRED_TXN_SCHEMA.validate(transactions)
 
@@ -149,8 +148,7 @@ def make_exploratory_plot(
     y: str = "normalized_item_qty_change",
     ylabel="item_qty",
 ):
-    """
-    Helper function to plot the demand curve for a specific subcategory of products
+    """Plot the demand curve for a specific subcategory of products.
 
     Parameters
     ----------
@@ -164,7 +162,6 @@ def make_exploratory_plot(
     altair plot object - scatter plot + curve showing change in demand as a function of change in price
 
     """
-
     plot_df = weekly_aggregates.query(f"category_desc=='{category}'").query(
         f"subcategory_desc == '{subcategory}'"
     )
@@ -221,8 +218,7 @@ def plot_demand_curve(
     show_error: bool = False,
     title: str = "Demand Curve",
 ):
-    """
-    Helper function to plot the demand curve for a specific subset of products
+    """Plot the demand curve for a specific subset of products.
 
     Parameters
     ----------
@@ -236,7 +232,6 @@ def plot_demand_curve(
         for subset of product specified in product_list
 
     """
-
     plot_df = weekly_aggregates.loc[weekly_aggregates.product_nbr.isin(product_list), :]
     plot_df.loc[:, "unit_price_change"] = plot_df.loc[:, "unit_price_change"].round(
         decimals=1
@@ -318,8 +313,7 @@ def plot_demand_curve(
 def plot_price_history(
     weekly_aggregates, product_list, category="", color_scheme="magma"
 ):
-    """
-    Generates a plot of the price history for a given list of products.
+    """Generate a plot of the price history for a given list of products.
 
     Parameters
     ----------

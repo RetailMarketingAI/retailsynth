@@ -31,6 +31,7 @@ class FeatureGenerationPipeline:
     customer_chunk_size: int
 
     def __post_init__(self):
+        """Derive some attributes from given arguments and run the feature generation at different aggregation levels."""
         self.all_weeks = self.transactions.index.levels[0].values.tolist()
         chk_start = self.chunk_idx * self.customer_chunk_size
         chk_end = chk_start + self.customer_chunk_size
@@ -84,9 +85,7 @@ class FeatureGenerationPipeline:
         self,
         feature_path: Path = None,
     ):
-        """
-        pipeline method to generate category-level features
-        """
+        """Pipeline method to generate category-level features."""
         if feature_path is None:
             feature_path = Path(self.txns_array_path).parent / "category_features"
         logging.info(f"Saving category features to {feature_path}")
@@ -124,9 +123,7 @@ class FeatureGenerationPipeline:
         self,
         feature_path: Path = None,
     ):
-        """
-        pipeline method to generate product-level features
-        """
+        """Pipeline method to generate product-level features."""
         if feature_path is None:
             feature_path = Path(self.txns_array_path).parent / "product_features"
         logging.info(f"Saving product features to {feature_path}")

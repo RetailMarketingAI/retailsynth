@@ -15,7 +15,7 @@ from retailsynth.utils.storage import load_result
 
 @dataclass
 class Loader:
-    """Load the data or synthesizer for a given policy
+    """Load the data or synthesizer for a given policy.
 
     Parameters
     ----------
@@ -33,13 +33,14 @@ class Loader:
     synthesizer = None
 
     def __post_init__(self):
+        """Load the feature dataframes and the synthesizer object."""
         self.data = load_result(self.data_path)
         if self.load_synthesizer:
             with open(Path(self.data_path, "synthesizer.pickle"), "rb") as fp:
                 self.synthesizer = pickle.load(fp)
 
     def __getitem__(self, index: str):
-        # helper method to make the model config indexable
+        """Make the model config subscriptable."""
         try:
             return getattr(self, index)
         except AttributeError:
@@ -49,7 +50,7 @@ class Loader:
 def segment_customer(
     synthesizer: DataSynthesizer, n_segment: int = 4, segment_name=None
 ) -> pd.DataFrame:
-    """Segment customers according their price sensitivity
+    """Segment customers according their price sensitivity.
 
     Parameters
     ----------
@@ -61,7 +62,6 @@ def segment_customer(
     -------
         pd.DataFrame: customer info data frame with columns of customer_key and segment
     """
-
     utility_beta_ui_w = synthesizer.utility_beta_ui_w.mean(axis=-1)
     sorted_indices = jnp.argsort(utility_beta_ui_w)
     segment_size = len(sorted_indices) // n_segment
@@ -90,7 +90,7 @@ def segment_customer(
 
 
 def compute_steady_state(transition_matrix: jnp.ndarray):
-    """Compute the steady state for pct of products on discount"""
+    """Compute the steady state for pct of products on discount."""
     # Transpose the matrix and find its eigenvalues and eigenvectors
     transposed_matrix = jnp.transpose(transition_matrix)
     eigenvalues, eigenvectors = jnp.linalg.eig(transposed_matrix)

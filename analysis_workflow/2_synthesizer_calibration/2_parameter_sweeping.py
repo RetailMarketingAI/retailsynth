@@ -24,14 +24,15 @@ ACQ_WEEK_THR = 3
 
 
 def report_ks_metrics(real_result, synthetic_result):
-    """helper method to gather similarity statistics from real and synthetic data
+    """Gather similarity statistics from real and synthetic data.
 
     Parameters
     ----------
         real_result (dict): the dictionary of real feature df for each step
         synthetic_result (dict): the dictionary of synthetic feature df for each step
 
-    Returns:
+    Returns
+    -------
         tuple: ks metrics for basket size, category choice probability and product choice probability
     """
     # get basket size in category counts
@@ -115,7 +116,7 @@ def get_optimization_goal(
     demand_ks,
     mode: str = "best_category_fit",
 ):
-    """helper method to define the optimization goal for parameter sweeping
+    """Define the optimization goal for parameter sweeping.
 
     Parameters
     ----------
@@ -126,7 +127,8 @@ def get_optimization_goal(
         demand_ks (float): ks metric for product demand distribution
         mode (str, optional): the mode to define the optimization goal. Defaults to "best_category_fit".
 
-    Returns:
+    Returns
+    -------
         float: the sum of the 3 ks metrics
     """
     if mode == "best_category_fit":

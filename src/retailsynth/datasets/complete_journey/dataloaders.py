@@ -107,7 +107,6 @@ def load_dataset(cfg_raw_data: RawData) -> RetailDataSet:
     transactions : pd.DataFrame
         Cleaned transaction-like table.
     """
-
     if cfg_raw_data.if_local_data:
         # Load data from local files
         root_dir = REPO_ROOT_DIR

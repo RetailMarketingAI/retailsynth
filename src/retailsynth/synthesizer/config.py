@@ -19,7 +19,7 @@ class ArbitraryTypeConfig:
 
 @dataclass(config=ArbitraryTypeConfig)
 class SyntheticParameters:
-    """Define hyperparameter used to generate the synthetic dataset"""
+    """Define hyperparameter used to generate the synthetic dataset."""
 
     n_customer: int
     n_category: int
@@ -36,6 +36,9 @@ class SyntheticParameters:
     discount_depth_distribution: numpyro.distributions.Distribution = None
     discount_state_a_01: ArrayLike = None
     discount_state_a_11: ArrayLike = None
+    # coupon coef
+    coupon_distribution: numpyro.distributions.Distribution = None
+    coupon_redemption_distribution: numpyro.distributions.Distribution = None
     # coefficients to generate product price
     price_alpha_i0: ArrayLike = None  # in shape of (n_product, )
     price_alpha_1: ArrayLike = None  # in shape of (1, )
@@ -61,6 +64,7 @@ class SyntheticParameters:
     purchase_quantity_gamma_1i_prod: ArrayLike = None  # in shape of (n_product, )
 
     def __post_init__(self):
+        """Derive some attributes from given config."""
         assert self.n_product == sum(self.category_product_count)
         assert self.n_category == len(self.category_product_count)
 
@@ -75,6 +79,7 @@ class SyntheticParameters:
         self.transition_prob = numpyro.distributions.Bernoulli(self.transition_prob)
 
     def __getitem__(self, index: str):
+        """Make the class subscriptable."""
         try:
             return getattr(self, index)
         except AttributeError:
@@ -92,13 +97,19 @@ def initialize_synthetic_data_setup(config_dict: DictConfig) -> SyntheticParamet
     discount_depth_distribution = instantiate(
         config_dict["discount_depth_distribution"]
     )
-
     seed = random.PRNGKey(random_seed)
     discount_state_a_01 = instantiate(config_dict["discount_state_a_01"]).sample(
         key=seed, sample_shape=(n_product,)
     )
     discount_state_a_11 = instantiate(config_dict["discount_state_a_11"]).sample(
         key=seed, sample_shape=(n_product,)
+    )
+    coupon_distribution = instantiate(config_dict["coupon_distribution"])
+    coupon_redemption_rate = instantiate(config_dict["coupon_redemption_rate"]).sample(
+        key=seed, sample_shape=(n_customer,)
+    )
+    coupon_redemption_distribution = numpyro.distributions.Bernoulli(
+        coupon_redemption_rate
     )
     price_alpha_i0 = instantiate(config_dict["price_alpha_i0"]).sample(
         key=seed, sample_shape=(n_product,)
@@ -158,6 +169,8 @@ def initialize_synthetic_data_setup(config_dict: DictConfig) -> SyntheticParamet
         discount_depth_distribution=discount_depth_distribution,
         discount_state_a_01=discount_state_a_01,
         discount_state_a_11=discount_state_a_11,
+        coupon_distribution=coupon_distribution,
+        coupon_redemption_distribution=coupon_redemption_distribution,
         price_alpha_i0=price_alpha_i0,
         price_alpha_1=price_alpha_1,
         lowest_price=lowest_price,
