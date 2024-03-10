@@ -9,9 +9,6 @@ from jax.typing import ArrayLike
 from omegaconf import DictConfig
 from pydantic.dataclasses import dataclass
 
-logging.info("Setting jax_enable_x64 to True")
-config.update("jax_enable_x64", True)
-
 
 class ArbitraryTypeConfig:
     arbitrary_types_allowed = True
