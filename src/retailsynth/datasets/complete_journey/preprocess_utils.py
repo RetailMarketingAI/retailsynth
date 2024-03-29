@@ -389,7 +389,7 @@ def save_processed_dfs(
     products: pd.DataFrame,
     transactions: pd.DataFrame,
 ):
-    """store processed parquet files locally
+    """Store processed parquet files locally.
 
     Parameters
     ----------

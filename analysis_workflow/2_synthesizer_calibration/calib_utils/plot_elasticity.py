@@ -10,7 +10,7 @@ from retailsynth.synthesizer.data_synthesizer import DataSynthesizer
 
 
 class ElasticityVizDataLayer:
-    """This class prepare data frame used to visualize the elasticity
+    """Prepare data frame used to visualize the elasticity.
 
     Parameters
     ----------
@@ -43,7 +43,7 @@ class ElasticityVizDataLayer:
         self.product_category_mapping = product_category_mapping
 
     def _agg_stats(self, axis):
-        """compute the mean the elasticity or probability of the given axis"""
+        """Compute the mean the elasticity or probability of the given axis."""
         category_choice_elasticity = self.elasticity_stats[
             "category_choice_elasticity"
         ].mean(axis=axis)

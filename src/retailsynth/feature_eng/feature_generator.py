@@ -68,7 +68,7 @@ def serialize_historical_transactions(
 
 @dataclass
 class ProductFeatureGenerator:
-    """Object to generate product-level features
+    """Object to generate product-level features.
 
     Attributes
     ----------
@@ -96,6 +96,7 @@ class ProductFeatureGenerator:
     chunk_idx: int
 
     def __post_init__(self):
+        """Initialize feature objects."""
         self.agg_level = "product_nbr"
         self.features = {
             feature_name: feature(self.agg_level, "week", feature_name)
@@ -103,7 +104,7 @@ class ProductFeatureGenerator:
         }
 
     def _load_data_array(self, data_path: str, variable_name: str) -> xr.Dataset:
-        """load the historical trx array from the given path
+        """Load the historical trx array from the given path.
 
         Parameters
         ----------
@@ -113,7 +114,7 @@ class ProductFeatureGenerator:
             a specific variable to load
 
         Returns
-        ---------
+        -------
         vars: xr.Dataset
             historical trx array on the product level
         """
@@ -134,17 +135,17 @@ class ProductFeatureGenerator:
     def write_historical_features(
         self, txns_array_path: str, filtered_index: pd.MultiIndex = None
     ) -> xr.DataArray:
-        """Compute derived features and store them to the given feature path
+        """Compute derived features and store them to the given feature path.
 
         Parameters
-        ---------
+        ----------
         txns_array_path: str
             directory where stores the historical trx array
         filtered_index: pd.MultiIndex
             index of the filtered historical trx array
 
         Returns
-        --------
+        -------
         item_qty_array: xr.DataArray
         """
         saved_features: List[str] = []
@@ -212,10 +213,10 @@ class ProductFeatureGenerator:
 
 @dataclass
 class StoreFeatureGenerator(ProductFeatureGenerator):
-    """Object to generate store-level features
+    """Object to generate store-level features.
 
     Attributes
-    -----------
+    ----------
     loading_method: Dict[str, str]
         dictionary of loading method for each historical trx array, sum or mean
     agg_level: str
@@ -225,6 +226,7 @@ class StoreFeatureGenerator(ProductFeatureGenerator):
     """
 
     def __post_init__(self):
+        """Initialize feature objects and aggregation methods."""
         self.loading_method = {
             "item_qty": "sum",
             "sales_amt": "sum",
@@ -256,7 +258,7 @@ class StoreFeatureGenerator(ProductFeatureGenerator):
     def _aggregate_raw_trx_array(
         self, trx_array: xr.DataArray, method="sum"
     ) -> xr.Dataset:
-        """Aggregate the raw trx arrays to the store level
+        """Aggregate the raw trx arrays to the store level.
 
         Parameters
         ----------
@@ -266,7 +268,7 @@ class StoreFeatureGenerator(ProductFeatureGenerator):
             aggregation method, sum or mean
 
         Returns
-        ---------
+        -------
         trx_array: xr.DataArray
             aggregated trx array on the store level, including item_qty, unit_price, discount_portion
         """
@@ -288,10 +290,10 @@ class StoreFeatureGenerator(ProductFeatureGenerator):
 
 @dataclass
 class CategoryFeatureGenerator(StoreFeatureGenerator):
-    """Object to generate store-level features
+    """Object to generate store-level features.
 
     Attributes
-    -----------
+    ----------
     product_category_mapping: pd.DataFrame
         product info data frame, with product_nbr as index and category_nbr as column
     agg_level: str
@@ -303,6 +305,7 @@ class CategoryFeatureGenerator(StoreFeatureGenerator):
     product_category_mapping: pd.DataFrame
 
     def __post_init__(self):
+        """Initialize feature objects and aggregation methods."""
         self.loading_method = {
             "item_qty": "sum",
             "sales_amt": "sum",
@@ -316,7 +319,7 @@ class CategoryFeatureGenerator(StoreFeatureGenerator):
         }
 
     def _aggregate_raw_trx_array(self, trx_array, method="sum") -> xr.Dataset:
-        """Aggregate the raw trx arrays to the category level
+        """Aggregate the raw trx arrays to the category level.
 
         Parameters
         ----------
@@ -326,7 +329,7 @@ class CategoryFeatureGenerator(StoreFeatureGenerator):
             aggregation method, sum or mean
 
         Returns
-        ---------
+        -------
         trx_array: xr.DataArray
             aggregated trx array on the category level, including item_qty, unit_price, discount_portion
         """

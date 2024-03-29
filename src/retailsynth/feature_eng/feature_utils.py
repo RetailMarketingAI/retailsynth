@@ -126,7 +126,6 @@ def convert_trx_df_to_numpy_fill_with_mean(
     -------
         np.ndarray: transaction array of target column in a shape of (n_time_step, n_customer, n_item)
     """
-
     # create placeholder for the transaction array
     shape = (
         len(indices["time_index"]),

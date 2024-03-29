@@ -20,6 +20,15 @@ synthetic_data_setup:
     _target_: numpyro.distributions.Beta
     concentration0: 5
     concentration1: 2
+    # coefficients to generate coupon
+  coupon_distribution: # set coupon to be zero
+    _target_: numpyro.distributions.Uniform
+    low: 0
+    high: 0
+  coupon_redemption_rate: # set redemption rate to be one
+    _target_: numpyro.distributions.Uniform
+    low: 1
+    high: 1
   # coefficients to compute product price
   price_alpha_i0:
     _target_: numpyro.distributions.TruncatedNormal

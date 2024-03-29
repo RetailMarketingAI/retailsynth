@@ -4,7 +4,7 @@ synthetic_data_setup:
   n_category: 4
   n_product: 20
   category_product_count: [ 6, 9, 2, 3]
-  store_util_marketing_feature_mode: "random"
+  store_util_marketing_feature_mode: "discount_coupon"
   random_seed: 0
   random_seed_range: 100
   discount_depth_distribution:
@@ -21,6 +21,14 @@ synthetic_data_setup:
     _target_: numpyro.distributions.Beta
     concentration0: 5
     concentration1: 1
+  coupon_distribution:
+    _target_: numpyro.distributions.Uniform
+    low: 0
+    high: 0
+  coupon_redemption_rate:
+    _target_: numpyro.distributions.Uniform
+    low: 1
+    high: 1
   # coefficients to compute product price
   price_alpha_i0:
     _target_: numpyro.distributions.LogNormal

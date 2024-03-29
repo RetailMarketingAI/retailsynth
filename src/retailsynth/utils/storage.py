@@ -36,10 +36,10 @@ def clear_feature_directory(feature_path):
 
 
 def clear_cwd(subdir: str = "", exclude: str = None):
-    """empty the current directory
+    """Empty the current directory.
 
-        Parameters
-        ----------
+    Parameters
+    ----------
         subdir (str, optional): clear only the specified subdirectory is given. Defaults to "".
         exclude (str, optional): specify type of file to keep in the directory. Defaults to None.
     """

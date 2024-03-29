@@ -12,7 +12,7 @@ from retailsynth.utils.storage import clear_cwd
 def overwrite_synthetic_data_config(
     original_cfg: DictConfig, overwrite_params: DictConfig, scenario_name: str
 ) -> DictConfig:
-    """overwrite the original config for synthetic data generation with new parameters for the scenario run
+    """Overwrite the original config for synthetic data generation with new parameters for the scenario run.
 
     Parameters
     ----------

@@ -50,7 +50,6 @@ class LastPurchaseQuantity(BaseFeature):
         -------
             np.ndarray: historical feature array in a shape of (n_week, n_customer, n_item)
         """
-
         current_trx_array = self._get_subset_historical_feature(
             customer_index, item_index
         )
@@ -79,7 +78,6 @@ class LastPurchaseQuantity(BaseFeature):
 
     def update_online_feature(self):
         """Update the online feature array by taking the online data if purchased."""
-
         # get flag of purchase event
         purchase_event = self.online_data > 0
         # take value from online data if purchased, otherwise keep the original value

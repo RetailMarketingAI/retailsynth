@@ -9,7 +9,9 @@ import numpy as np
 
 @dataclass
 class BaseFeature(ABC):
-    """Abstract class of feature object. Expected usage includes
+    """Abstract class of feature object.
+
+        Expected usage includes:
         1. Write historical data and initialize the online feature array from the historical datasets
             >>> feature.set_historical_data(trx_array)
         2. Get historical data.
@@ -31,14 +33,17 @@ class BaseFeature(ABC):
     time_freq: str = field(default="week")
 
     def __post_init__(self):
+        """Set default values for attributes that helps generate online features."""
         self.online_feature_array = None
         self.n_historical_weeks = 0
 
     @abstractmethod
     def _initialize_online_features(self):
         """Abstract method to initialize the online features from the historical datasets.
+
         The online feature should be fully processed. No call to update_online_feature()
-        is to be needed after initialization."""
+        is to be needed after initialization.
+        """
         raise NotImplementedError
 
     def set_historical_data(self, transaction_array: np.ndarray):
@@ -78,7 +83,7 @@ class BaseFeature(ABC):
     def _get_subset_historical_feature(
         self, customer_index: np.array, item_index: np.array
     ):
-        """Helper function to get subset of historical features.
+        """Get subset of historical features for specific customer and item pair.
 
         Parameters
         ----------
@@ -109,7 +114,6 @@ class BaseFeature(ABC):
         ----------
             transaction_array (np.ndarray): update online data attribute by changing the reference
         """
-
         self.online_data = transaction_array
         self.n_historical_weeks += 1
 
@@ -146,9 +150,11 @@ class IdentityFeature(BaseFeature):
     name: str = field(default="identity")
 
     def __post_init__(self):
+        """Assign target_column identical to feature name."""
         self.target_column = self.name
 
     def _initialize_online_features(self):
+        """Initialize online feature array from historical data."""
         self.online_feature_array = self._historical_data[-1]
 
     def get_historical_feature(

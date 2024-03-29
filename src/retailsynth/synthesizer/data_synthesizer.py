@@ -1,6 +1,5 @@
 import logging
 from collections import defaultdict
-from dataclasses import dataclass
 from typing import Dict, Optional
 
 import jax
@@ -15,60 +14,63 @@ from tqdm import tqdm
 from retailsynth.synthesizer.config import SyntheticParameters
 
 
-@dataclass
 class DataSynthesizer:
-    """This class is used to generate synthetic data based on the given configuration"""
+    """To generate synthetic data based on the given configuration."""
 
-    cfg_raw_data: SyntheticParameters
-
-    def __post_init__(self):
-        self.n_customer = self.cfg_raw_data.n_customer
-        self.n_category = self.cfg_raw_data.n_category
-        self.n_product = self.cfg_raw_data.n_product
-        self.category_product_count = self.cfg_raw_data.category_product_count
+    def __init__(self, cfg_raw_data: SyntheticParameters):
+        """To read coefficients from the config and save as attributes."""
+        self.n_customer = cfg_raw_data.n_customer
+        self.n_category = cfg_raw_data.n_category
+        self.n_product = cfg_raw_data.n_product
+        self.category_product_count = cfg_raw_data.category_product_count
         self.store_util_marketing_feature_mode = (
-            self.cfg_raw_data.store_util_marketing_feature_mode
+            cfg_raw_data.store_util_marketing_feature_mode
         )
-        if self.store_util_marketing_feature_mode not in ["discount", "random"]:
+        if self.store_util_marketing_feature_mode not in [
+            "discount",
+            "random",
+            "discount_coupon",
+        ]:
             raise ValueError(
-                f"Invalid marketing feature mode: {self.store_util_marketing_feature_mode}. Supported modes are 'discount' and 'random'."
+                f"Invalid marketing feature mode: {self.store_util_marketing_feature_mode}. Supported modes are 'discount_coupon', 'discount' and 'random'."
             )
-        self.random_seed = self.cfg_raw_data.random_seed
-        self.random_seed_range = self.cfg_raw_data.random_seed_range
+        self.random_seed = cfg_raw_data.random_seed
+        self.random_seed_range = cfg_raw_data.random_seed_range
         # coef for discount generation
-        self.discount_depth_distribution = self.cfg_raw_data.discount_depth_distribution
-        self.transition_prob = self.cfg_raw_data.transition_prob
+        self.discount_depth_distribution = cfg_raw_data.discount_depth_distribution
+        self.transition_prob = cfg_raw_data.transition_prob
+        # distribution for coupon generation
+        self.coupon_distribution = cfg_raw_data.coupon_distribution
+        self.coupon_redemption_distribution = (
+            cfg_raw_data.coupon_redemption_distribution
+        )
         # coef for product price generation
-        self.price_alpha_i0 = self.cfg_raw_data.price_alpha_i0
-        self.price_alpha_1 = self.cfg_raw_data.price_alpha_1
-        self.lowest_price = self.cfg_raw_data.lowest_price
+        self.price_alpha_i0 = cfg_raw_data.price_alpha_i0
+        self.price_alpha_1 = cfg_raw_data.price_alpha_1
+        self.lowest_price = cfg_raw_data.lowest_price
         # coef for product utility generation
-        self.utility_beta_ui_x = self.cfg_raw_data.utility_beta_ui_x
-        self.utility_beta_ui_w = self.cfg_raw_data.utility_beta_ui_w
-        self.utility_clip_percentile = self.cfg_raw_data.utility_clip_percentile
-        self.utility_beta_ui_z = self.cfg_raw_data.utility_beta_ui_z
-        self.utility_error_distribution = self.cfg_raw_data.utility_error_distribution
+        self.utility_beta_ui_x = cfg_raw_data.utility_beta_ui_x
+        self.utility_beta_ui_w = cfg_raw_data.utility_beta_ui_w
+        self.utility_clip_percentile = cfg_raw_data.utility_clip_percentile
+        self.utility_beta_ui_z = cfg_raw_data.utility_beta_ui_z
+        self.utility_error_distribution = cfg_raw_data.utility_error_distribution
 
         # coef for category utility generation
-        self.category_choice_gamma_0j_cate = (
-            self.cfg_raw_data.category_choice_gamma_0j_cate
-        )
-        self.category_choice_gamma_1j_cate = (
-            self.cfg_raw_data.category_choice_gamma_1j_cate
-        )
+        self.category_choice_gamma_0j_cate = cfg_raw_data.category_choice_gamma_0j_cate
+        self.category_choice_gamma_1j_cate = cfg_raw_data.category_choice_gamma_1j_cate
 
         # coef for store visit probability
-        self.store_visit_gamma_1_store = self.cfg_raw_data.store_visit_gamma_1_store
-        self.store_visit_gamma_2_store = self.cfg_raw_data.store_visit_gamma_2_store
-        self.store_visit_gamma_0_store = self.cfg_raw_data.store_visit_gamma_0_store
-        self.store_visit_theta_u = self.cfg_raw_data.store_visit_theta_u
+        self.store_visit_gamma_1_store = cfg_raw_data.store_visit_gamma_1_store
+        self.store_visit_gamma_2_store = cfg_raw_data.store_visit_gamma_2_store
+        self.store_visit_gamma_0_store = cfg_raw_data.store_visit_gamma_0_store
+        self.store_visit_theta_u = cfg_raw_data.store_visit_theta_u
 
         # coef for product demand
         self.purchase_quantity_gamma_0i_prod = (
-            self.cfg_raw_data.purchase_quantity_gamma_0i_prod
+            cfg_raw_data.purchase_quantity_gamma_0i_prod
         )
         self.purchase_quantity_gamma_1i_prod = (
-            self.cfg_raw_data.purchase_quantity_gamma_1i_prod
+            cfg_raw_data.purchase_quantity_gamma_1i_prod
         )
 
         # copy of store visit score in the current step
@@ -79,9 +81,9 @@ class DataSynthesizer:
         )
 
         # store choice probabilities
-        self.choice_decision_stats = defaultdict(list)
+        self.choice_decision_stats: Dict = defaultdict(list)
         # store elasticities
-        self.elasticity_stats = defaultdict(list)
+        self.elasticity_stats: Dict = defaultdict(list)
         # cache to compute store visit probability depending on the previous step
         self.category_utility_cache = jnp.zeros((self.n_customer, self.n_category))
 
@@ -96,14 +98,15 @@ class DataSynthesizer:
         )
 
     def _initialize_random_seed_generator(self):
-        """Fix a random seed generator internally to sample the trajectory"""
+        """Fix a random seed generator internally to sample the trajectory."""
         self.random_seed_generator = np.random.default_rng(self.random_seed)
         self.random_seed = random.PRNGKey(self.random_seed)
 
     def _get_random_seed(self) -> jnp.ndarray:
-        """Pop a random integer from the random seed generator and encapsulate it to a jax random key
+        """Pop a random integer from the random seed generator and encapsulate it to a jax random key.
 
-        Returns:
+        Returns
+        -------
             jnp.ndarray: The jax random key
         """
         seed = self.random_seed_generator.integers(low=0, high=self.random_seed_range)
@@ -111,10 +114,12 @@ class DataSynthesizer:
         return seed
 
     def _initialize_product_category_mapping(self) -> jnp.ndarray:
-        """Initial a indicator matrix to specify which category a product belongs to.
-        The mapping is stored as a matrix, which will be used in multiplication with categorical transaction matrix
+        """Initialize a indicator matrix to specify which category a product belongs to.
 
-        Returns:
+        The mapping is stored as a matrix, which will be used in multiplication with categorical transaction matrix.
+
+        Returns
+        -------
             jnp.ndarray: a 2d matrix in shape of (n_product, n_category)
         """
         mapping = np.zeros((self.n_product, self.n_category), dtype=np.int)
@@ -124,10 +129,12 @@ class DataSynthesizer:
 
     def _initialize_dict_category_product_mapping(self) -> Dict[int, jnp.ndarray]:
         """Initialize a dictionary of category product mapping.
+
         The mapping is stored as a dictionary with category_nbr as the key and a list of corresponding product_nbrs as the value.
         It will be used to easily extract the product index for one category to generate product choice decision within a category
 
-        Returns:
+        Returns
+        -------
             Dict[int, jnp.ndarray]: with category_nbr as the key and an array of product indices in the corresponding category
 
         """
@@ -138,9 +145,10 @@ class DataSynthesizer:
         }
 
     def _initialize_product_endogenous_feature(self) -> jnp.ndarray:
-        """Initialize the endogenous feature of every product, which maintain static along the trajectory
+        """Initialize the endogenous feature of every product, which maintain static along the trajectory.
 
-        Returns:
+        Returns
+        -------
             jnp.ndarray: product endogenous feature, in shape of (n_product, )
         """
         variable_mean = numpyro.sample(
@@ -160,7 +168,7 @@ class DataSynthesizer:
         return w
 
     def _initialize_product_price(self, endogenous_feature: jnp.array) -> jnp.array:
-        """Initialize the base price of every product, which maintain static along the trajectory
+        """Initialize the base price of every product, which maintain static along the trajectory.
 
         $$P_{it} = \alpha_{i0} + \alpha_1 Z_{i}$$
 
@@ -182,7 +190,7 @@ class DataSynthesizer:
         variable_name: Optional[str] = "z",
         force_positive: Optional[bool] = False,
     ) -> dist.Distribution:
-        """helper method to create a standard normal distribution to sample features from
+        """Create a standard normal distribution to sample features from.
 
         Parameters
         ----------
@@ -219,7 +227,7 @@ class DataSynthesizer:
         variable_distribution: dist.Distribution,
         variable_name: Optional[str] = "z",
     ) -> jnp.ndarray:
-        """sample a random feature
+        """Sample a random feature.
 
         Parameters
         ----------
@@ -238,7 +246,7 @@ class DataSynthesizer:
         shape: tuple,
         distribution: dist.Distribution,
     ) -> jnp.ndarray:
-        """sample error term
+        """Sample error term.
 
         Parameters
         ----------
@@ -253,11 +261,12 @@ class DataSynthesizer:
         return numpyro.sample("error", distribution, sample_shape=shape, rng_key=seed)
 
     def sample_discount(self, variable_name: Optional[str] = "d") -> jnp.ndarray:
-        """Sample random discount
+        """Sample random discount.
 
         Parameters
         ----------
             variable_name (str, optional): name of the discount term. Defaults to "d".
+
         Returns
         -------
             jnp.ndarray: random discount array in shape of (n_customer, n_product)
@@ -283,7 +292,7 @@ class DataSynthesizer:
         return discount * self.discount_state
 
     def _update_discount_state(self, transition_sample):
-        """update the discount flag based on the transition sample
+        """Update the discount flag based on the transition sample.
 
         Parameters
         ----------
@@ -301,7 +310,7 @@ class DataSynthesizer:
         return new_discount_state
 
     def compute_product_price(self, discount: jnp.ndarray) -> jnp.ndarray:
-        """Compute product price
+        """Compute product price.
 
         $$
         P_{it} &= (1 - D_{it}) P_{it}
@@ -310,6 +319,7 @@ class DataSynthesizer:
         Parameters
         ----------
             discount (jnp.ndarray): discount array in shape of (n_customer, n_product)
+            coupon (jnp.ndarray): coupon that the customer redeemed at the current time step, in shape of (n_customer, n_product). Default to None.
 
         Returns
         -------
@@ -327,8 +337,96 @@ class DataSynthesizer:
         )
         return unit_price.clip(self.lowest_price)
 
+    def sample_coupon(self, mode: str = "universal"):
+        """Sample coupon for all customers.
+
+        Parameters
+        ----------
+            mode (str, optional): coupon modes. Defaults to "universal".
+                "universal" mode for coupons applied to all categories.
+                "category" mode for coupons applied to specific category.
+
+        Returns
+        -------
+            jnp.ndarray: coupon array in shape of (n_customer, n_product)
+        """
+        if mode == "universal":
+            shape = (self.n_customer,)
+        elif mode == "category":
+            shape = (self.n_customer, self.n_category)  # type: ignore
+        else:
+            raise ValueError(
+                f"Invalid coupon mode: {mode}. Supported modes are 'universal' and 'category'."
+            )
+        seed = self._get_random_seed()
+        # get actual coupon
+        coupon = numpyro.sample(
+            "coupon",
+            self.coupon_distribution,
+            sample_shape=shape,
+            rng_key=seed,
+        )
+        return coupon
+
+    def compute_product_price_with_coupon(
+        self, product_price: jnp.ndarray, coupon: jnp.ndarray = None
+    ) -> jnp.ndarray:
+        """Compute the product price with coupon redemption.
+
+        $$
+        P_{it} &= (1 _ C_{uit} * Redemption_{ut}) P_{it}
+        $$
+
+        Parameters
+        ----------
+            product_price (jnp.ndarray): product price at the current step, in shape of (n_product, )
+            coupon (jnp.ndarray, optional): coupon a customer redeemed at the current step, in shape of (n_customer, n_category) or (n_customer, ). Defaults to be None.
+
+        Returns
+        -------
+            jnp.ndarray: product price with coupon redemption
+        """
+        seed = self._get_random_seed()
+
+        if coupon is None:
+            # broadcast to be in shape of (n_customer, n_product)
+            # to make the price computation easier
+            redeemed_coupon = jnp.zeros((self.n_customer, self.n_product))
+        elif coupon.shape == (self.n_customer, self.n_category):
+            redemption = numpyro.sample(
+                "redemption",
+                self.coupon_redemption_distribution,
+                sample_shape=(self.n_category,),
+                rng_key=seed,
+            ).T  # get redemption indicator matrix in shape of (n_customer, n_category)
+            redeemed_coupon = jnp.matmul(
+                coupon * redemption, self.product_category_mapping.T
+            )
+        elif coupon.shape == (self.n_customer,):
+            redemption = numpyro.sample(
+                "redemption",
+                self.coupon_redemption_distribution,
+                rng_key=seed,
+            )  # get redemption indicator matrix in shape of (n_customer, )
+            redeemed_coupon = jnp.repeat(
+                jnp.expand_dims(coupon * redemption, axis=1), self.n_product, axis=1
+            )
+        else:
+            raise ValueError(
+                f"Invalid coupon shape: {coupon.shape}. It should be either (n_customer, n_category) or (n_customer, )"
+            )
+
+        assert redeemed_coupon.shape == (self.n_customer, self.n_product)
+        assert (redeemed_coupon >= 0).all(), "Coupon should be non-negative."
+        assert (
+            redeemed_coupon < 1
+        ).all(), "Coupon should be in percentage, and less than one."
+
+        price_with_coupon = (1 - redeemed_coupon) * product_price
+        return price_with_coupon
+
     def compute_product_utility(self, price: jnp.ndarray) -> jnp.ndarray:
-        """Compute product utility
+        """Compute product utility.
 
         $$
         \mu^{prod}_{uit} &= \mathbf{\beta_{ui}^x} \mathbf{X_{uit}} + \beta_{ui}^{z} Z_{i} + \beta_{ui}^w log(P_{it}) + \epsilon_{uit}
@@ -367,7 +465,7 @@ class DataSynthesizer:
     def compute_product_purchase_conditional_probability(
         self, product_utility: jnp.ndarray
     ) -> jnp.ndarray:
-        """Compute the product purchase probability conditional on category choice
+        """Compute the product purchase probability conditional on category choice.
 
         $$
         p^{prod}_{uit} &= P(\mathbb{I}_{uit} = 1 | \mathbb{I}_{ujt} = 1)\\
@@ -396,7 +494,7 @@ class DataSynthesizer:
         return product_prob
 
     def compute_category_utility(self, product_utility: jnp.ndarray) -> jnp.ndarray:
-        """compute category utility based on product utility
+        """Compute category utility based on product utility.
 
         $$
         CV_{ujt} &= \log \sum_{k \in J_j} \exp(\mu^{prod}_{ukt})
@@ -421,7 +519,7 @@ class DataSynthesizer:
     def compute_category_purchase_conditional_probability(
         self, category_utility: jnp.ndarray
     ) -> jnp.ndarray:
-        """ Compute category purchase probability conditional on store visit
+        """Compute category purchase probability conditional on store visit.
 
         $$
         p^{cate}_{ujt} &= P(\mathbb{I}_{ujt}=1 | \mathbb{I}_{ut}=1) \\
@@ -453,17 +551,20 @@ class DataSynthesizer:
         return conditional_prob
 
     def sample_marketing_feature(self, **kwargs) -> jnp.ndarray:
-        """Get marketing feature to be used in the store utility computation
+        """Get marketing feature to be used in the store utility computation.
 
         Parameters
         ----------
-            **kwargs: keyword arguments to pass to the function. Need to include "discount" if self.store_util_marketing_feature_mode == "discount"
+            **kwargs: keyword arguments to pass to the function.
+                If self.store_util_marketing_feature_mode == "discount", the discount is required. marketing feature is the sum of the discount.
+                If self.store_util_marketing_feature_mode == "discount_coupon", the discount and coupon are required. marketing feature is the sum of all product discounts and coupons.
 
         Raises
         ------
             NotImplementedError: raise if the marketing feature mode is not supported
 
-        Returns:
+        Returns
+        -------
             jnp.ndarray: marketing features
         """
         if self.store_util_marketing_feature_mode == "random":
@@ -475,7 +576,36 @@ class DataSynthesizer:
             marketing_feature = self._sample_feature(marketing_feature_dist)
         elif self.store_util_marketing_feature_mode == "discount":
             product_discount = kwargs.get("discount")
+            # this marketing feature is a scaler as the same discount applies to all customers
             marketing_feature = jnp.sum(product_discount)
+        elif self.store_util_marketing_feature_mode == "discount_coupon":
+            product_discount = kwargs.get("discount")
+            marketing_feature = jnp.sum(product_discount)
+
+            product_coupon = kwargs.get("coupon")
+            if product_coupon is None:
+                raise ValueError(
+                    "Coupon is required to generate marketing feature in 'discount_coupon' mode."
+                )
+            if product_coupon.shape == (self.n_customer,):
+                # empirical coupon is the store-wide coupon multiplied by the number of products
+                product_coupon_marketing_term = product_coupon * self.n_product
+            elif product_coupon.shape == (self.n_customer, self.n_category):
+                product_coupon_marketing_term = jnp.matmul(
+                    product_coupon, self.product_category_mapping.T
+                )
+                # empirical coupon is to sum (category coupon * the number of products in the category)
+                product_coupon_marketing_term = jnp.sum(
+                    product_coupon_marketing_term, axis=1
+                )
+            elif product_coupon.shape == (self.n_customer, self.n_product):
+                product_coupon_marketing_term = jnp.sum(product_coupon, axis=1)
+
+            # marketing feature in shape of (n_customer, )
+            # because the coupon is customer-specific
+            marketing_feature = (
+                jnp.sum(product_discount) + product_coupon_marketing_term
+            )
 
         return marketing_feature
 
@@ -485,7 +615,7 @@ class DataSynthesizer:
         prev_store_visit: jnp.ndarray,
         current_marketing_feature: jnp.ndarray,
     ) -> jnp.ndarray:
-        """compute store utility for all customers, to derive the store visit probability
+        """Compute store utility for all customers, to derive the store visit probability.
 
         $$
         SV_{ut} &= \log \sum_{j \in J} \exp(CV_{ujt})
@@ -516,7 +646,7 @@ class DataSynthesizer:
         prev_store_visit: jnp.ndarray,
         marketing_feature: jnp.ndarray,
     ) -> jnp.ndarray:
-        """ Compute store visit probability
+        """Compute store visit probability.
 
         \begin{align}
             P(\mathbb{I}_{ut}) &=
@@ -553,7 +683,7 @@ class DataSynthesizer:
         return store_visit_prob
 
     def _sample_product_choice(self, product_prob, random_seed) -> jnp.ndarray:
-        """sample product choice decision for all categories
+        """Sample product choice decision for all categories.
 
         Parameters
         ----------
@@ -585,7 +715,8 @@ class DataSynthesizer:
         return complete_product_choice
 
     def compute_product_demand_mean(self, product_utility: jnp.ndarray) -> jnp.ndarray:
-        """Compute the mean of product demand
+        """Compute the mean of product demand.
+
         Parameters
         ----------
             product_utility (jnp.ndarray): product utility in shape of (n_customer, n_product)
@@ -611,7 +742,7 @@ class DataSynthesizer:
         product_choice_prob: jnp.ndarray,
         product_demand_prob: jnp.ndarray,
     ) -> tuple:
-        """sample store visit, category choice, product choice, and product demand
+        """Sample store visit, category choice, product choice, and product demand.
 
         Parameters
         ----------
@@ -651,7 +782,7 @@ class DataSynthesizer:
         product_choice: jnp.ndarray,
         product_demand: jnp.ndarray,
     ) -> jnp.ndarray:
-        """Compute joint decision for product purchase
+        """Compute joint decision for product purchase.
 
         \begin{align}
             P(\mathbb{Q}_{ujt} = q) =  P(\mathbb{I}_{ut}=1) * P(\mathbb{I}_{uct} = 1 | \mathbb{I}_{ut} = 1) * P(\mathbb{I}_{ujt} = 1 | \mathbb{I}_{uct} = 1) * P(\mathbb{Q}_{ujt} = q|\mathbb{I}_{ujt} = 1)
@@ -669,7 +800,6 @@ class DataSynthesizer:
             jnp.ndarray: joint decision on product quantity purchased
 
         """
-
         store_visit = jnp.expand_dims(store_visit, axis=-1)
         category_choice = jnp.matmul(category_choice, self.product_category_mapping.T)
         joint_decision = product_demand * category_choice * product_choice * store_visit
@@ -680,14 +810,16 @@ class DataSynthesizer:
         self,
         prev_store_visit: jnp.ndarray,
         prev_store_visit_prob: jnp.ndarray,
+        coupon: jnp.ndarray = None,
         compute_store_prob: bool = False,
     ) -> tuple:
-        """sample transaction for one time step
+        """Sample transaction for one time step.
 
         Parameters
         ----------
             prev_store_visit (jnp.ndarray): store visit decision at the previous time step
             prev_store_visit_prob (jnp.ndarray): store visit probability at the previous time step
+            coupon (jnp.ndarray): coupon that the customer redeemed at the current time step. Default to None.
             compute_store_prob (bool): flag to tell whether to compute the store visit probability recursively based on the previous store visit prob
 
         Returns
@@ -696,7 +828,10 @@ class DataSynthesizer:
         """
         discount = self.sample_discount()
         product_price = self.compute_product_price(discount)
-        product_utility = self.compute_product_utility(product_price)
+        product_price_with_coupon = self.compute_product_price_with_coupon(
+            product_price, coupon
+        )
+        product_utility = self.compute_product_utility(product_price_with_coupon)
 
         category_utility = self.compute_category_utility(product_utility)
         logging.debug(f"Avg. category utility: {category_utility.mean():.4f}")
@@ -714,7 +849,9 @@ class DataSynthesizer:
             f"Avg. category choice probability: {category_choice_prob.mean():.4f}"
         )
         if compute_store_prob:
-            marketing_feature = self.sample_marketing_feature(discount=discount)
+            marketing_feature = self.sample_marketing_feature(
+                discount=discount, coupon=coupon
+            )
             assert prev_store_visit_prob is not None
             assert prev_store_visit is not None
             store_visit_prob = self.compute_store_visit_probability(
@@ -731,6 +868,9 @@ class DataSynthesizer:
         self.category_utility_cache = category_utility
         # store probability stats
         self.choice_decision_stats["product_price"].append(product_price)
+        self.choice_decision_stats["product_price_with_coupon"].append(
+            product_price_with_coupon
+        )
         self.choice_decision_stats["discount"].append(discount)
         self.choice_decision_stats["discount_state"].append(self.discount_state)
         self.choice_decision_stats["store_visit_prob"].append(store_visit_prob)
@@ -747,8 +887,9 @@ class DataSynthesizer:
             )
         )
         # store elasticity stats
+        redeemed_coupon = 1 - product_price_with_coupon / self.product_price
         store_visit_elasticity = self.compute_store_visit_elasticity(
-            store_visit_prob, discount=discount
+            store_visit_prob, discount=discount, coupon=redeemed_coupon
         )
         category_elasticity = self.compute_category_elasticity(
             product_choice_prob, category_choice_prob
@@ -792,13 +933,14 @@ class DataSynthesizer:
             store_visit_prob,
             product_price,
             discount,
+            product_price_with_coupon,
         )
 
     def sample_trajectory(
         self,
         n_week: int,
     ) -> jnp.ndarray:
-        """sample a trajectory
+        """Sample a trajectory.
 
         Parameters
         ----------
@@ -813,30 +955,43 @@ class DataSynthesizer:
         trajectory = []
         product_price_record = []
         discount_record = []
+        price_with_coupon_record = []
         for week_index in tqdm(range(n_week), desc="Synthesizing trajectory"):
             compute_store_prob = week_index > 0
+            coupon = self.sample_coupon()
             (
                 trx,
                 store_visit,
                 store_visit_prob,
                 product_price,
                 discount,
+                product_price_with_coupon,
             ) = self.sample_transaction_one_step(
-                store_visit, store_visit_prob, compute_store_prob=compute_store_prob
+                store_visit,
+                store_visit_prob,
+                coupon=coupon,
+                compute_store_prob=compute_store_prob,
             )
             trajectory.append(trx)
             product_price_record.append(product_price)
             discount_record.append(discount)
+            price_with_coupon_record.append(product_price_with_coupon)
         trajectory = jnp.array(trajectory)
         product_price_record = jnp.array(product_price_record)
         discount_record = jnp.array(discount_record)
-        return trajectory, product_price_record, discount_record
+        price_with_coupon_record = jnp.array(price_with_coupon_record)
+        return (
+            trajectory,
+            product_price_record,
+            discount_record,
+            price_with_coupon_record,
+        )
 
     def convert_product_utility_to_df(
         self,
         product_utility: jnp.ndarray,
     ) -> pd.DataFrame:
-        """convert trajectory to dataframe"""
+        """Convert trajectory to dataframe."""
         time, customer, product = jnp.where(product_utility)
         df = pd.DataFrame(
             columns=[
@@ -857,8 +1012,9 @@ class DataSynthesizer:
         trajectory: jnp.ndarray,
         price_record: jnp.ndarray,
         discount_record: jnp.array,
+        price_with_coupon_record: jnp.array,
     ) -> pd.DataFrame:
-        """convert trajectory to dataframe"""
+        """Convert trajectory to dataframe."""
         time, customer, product = jnp.where(trajectory > 0)
         df = pd.DataFrame(
             columns=[
@@ -877,17 +1033,18 @@ class DataSynthesizer:
         df["item_qty"] = trajectory[time, customer, product]
         df["discount_portion"] = discount_record[time, product]
         df["unit_price"] = price_record[time, product]
+        df["unit_price_with_coupon"] = price_with_coupon_record[time, customer, product]
         df["sales_amt"] = df["unit_price"] * df["item_qty"]
         return df.set_index(["week", "customer_key", "product_nbr"])
 
     def convert_customer_info_to_df(self) -> pd.DataFrame:
-        """Create placeholder for customer info data frame, containing only customer_key"""
+        """Create placeholder for customer info data frame, containing only customer_key."""
         customer_info = pd.DataFrame(columns=["customer_key"])
         customer_info["customer_key"] = jnp.arange(self.n_customer)
         return customer_info.set_index("customer_key")
 
     def convert_product_info_to_df(self):
-        """Create placeholder for product info data frame, containing only product_nbr and category_desc"""
+        """Create placeholder for product info data frame, containing only product_nbr and category_desc."""
         n_product, _ = self.product_category_mapping.shape
         product_info = pd.DataFrame(columns=["product_nbr", "category_nbr"])
         product_info["product_nbr"] = jnp.arange(n_product)
@@ -900,11 +1057,13 @@ class DataSynthesizer:
     def compute_store_visit_elasticity(
         self, store_visit_prob: jnp.ndarray, **kwargs
     ) -> jnp.ndarray:
-        """ compute the store visit elasticity of a product regarding to the product price
+        """Compute the store visit elasticity of a product regarding to the product price.
+
         $$
             e^{store}_{uit} &= \left. \frac{d p^{store}_{ut}} {p^{store}_{ut}} \middle/ \frac{d P_{uit}}{P_{uit}} \right.\\
             &= -\gamma_2(1-p^{store}_{ut})(1-D_{it})
         $$
+
         Parameters
         ----------
             store_visit_prob (jnp.ndarray): store visit probability at the current time step
@@ -925,6 +1084,28 @@ class DataSynthesizer:
                 f"Global mean of store elasticity: {store_elasticity.mean(): .4f}"
             )
             return store_elasticity
+        elif self.store_util_marketing_feature_mode == "discount_coupon":
+            discount = kwargs.get("discount")
+            coupon = kwargs.get("coupon")
+            if coupon is None:
+                raise ValueError(
+                    "Coupon is required to generate marketing feature in 'discount_coupon' mode."
+                )
+            assert coupon.shape == (
+                self.n_customer,
+                self.n_product,
+            ), f"Coupon shape needs to be in ({self.n_customer}, {self.n_product})."
+            store_elasticity = (
+                -self.store_visit_gamma_2_store
+                * (1 - jnp.expand_dims(store_visit_prob, axis=-1))
+                * (1 - jnp.expand_dims(discount, axis=0))
+                * (1 - coupon)
+            )
+            logging.debug(
+                f"Global mean of store elasticity: {store_elasticity.mean(): .4f}"
+            )
+            return store_elasticity
+
         elif self.store_util_marketing_feature_mode == "random":
             # the store visit probability is not a function of price, thus the elasticity is zero
             return jnp.zeros(shape=(self.n_customer, self.n_product))
@@ -932,7 +1113,8 @@ class DataSynthesizer:
     def compute_category_elasticity(
         self, product_prob: jnp.ndarray, category_prob: jnp.ndarray
     ) -> jnp.ndarray:
-        """ compute the category elasticity of a product
+        """Compute the category elasticity of a product.
+
         $$
             e^{cate}_{uit} &= \left. \frac{d p^{cate}_{ujt}} {p^{cate}_{ujt}} \middle/ \frac{d P_{uit}}{P_{uit}} \right.\\
             &= p^{prod}_{uit} (1 - p^{cate}_{ujt})
@@ -966,7 +1148,8 @@ class DataSynthesizer:
         return category_elasticity
 
     def compute_product_elasticity(self, product_prob: jnp.ndarray) -> jnp.ndarray:
-        """
+        """Compute the product elasticity for the step of product choice.
+
         $$
             e^{prod}_{u(ii)t} &= \left. \frac{d p^{prod}_{uit}} {p^{prod}_{uit}} \middle/ \frac{d P_{uit}}{P_{uit}} \right.\\
             &= (1 - p^{prod}_{uit}) \beta_{ui}^{w}
@@ -989,7 +1172,8 @@ class DataSynthesizer:
     def compute_product_demand_elasticity(
         self, product_demand: jnp.ndarray
     ) -> jnp.ndarray:
-        """
+        """Compute the product elasticity for the step of purchased quantity.
+        
         $$
             e^{quant}_{u(ii)t} &= \left. \frac{d (\lambda_{uit} + 1)} {\lambda_{uit} + 1} \middle/ \frac{d P_{uit}}{P_{uit}} \right.\\
             &= (\frac{\lambda_{uit}}{1 + \lambda_{uit}})\gamma_{ui}^{prod}\beta_{ui}^{w}
@@ -1020,7 +1204,7 @@ class DataSynthesizer:
         product_elasticity: jnp.ndarray,
         product_demand_elasticity: jnp.ndarray,
     ) -> jnp.ndarray:
-        """ compute the overall elasticity of the joint decision
+        """Compute the overall elasticity of the joint decision.
 
         $$
             e_{uit}^{overall} &= \left. \frac{d \mathbb{E}Q_{uit}}{\mathbb{E}Q_{uit}} \middle/ \frac{d P_{uit}}{P_{uit}} \right.\\

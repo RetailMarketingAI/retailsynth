@@ -101,9 +101,7 @@ class BaseInputDataset(object):
         raise NotImplementedError
 
     def cast_column_type(self):
-        """
-        Casts the column types in the data frames.
-        """
+        """Casts the column types in the data frames."""
         pass
 
     def schema_validator(self):
