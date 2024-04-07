@@ -9,6 +9,9 @@ from jax.typing import ArrayLike
 from omegaconf import DictConfig
 from pydantic.dataclasses import dataclass
 
+logging.info("Setting jax_enable_x64 to True")
+config.update("jax_enable_x64", True)
+
 
 class ArbitraryTypeConfig:
     arbitrary_types_allowed = True
@@ -109,10 +112,10 @@ def initialize_synthetic_data_setup(config_dict: DictConfig) -> SyntheticParamet
         coupon_redemption_rate
     )
     price_alpha_i0 = instantiate(config_dict["price_alpha_i0"]).sample(
-        key=seed, sample_shape=(n_product,)
+        key=random.PRNGKey(0), sample_shape=(n_product,)
     )
     price_alpha_1 = instantiate(config_dict["price_alpha_1"]).sample(
-        key=seed, sample_shape=(1,)
+        key=random.PRNGKey(0), sample_shape=(1,)
     )
     lowest_price = config_dict["lowest_price"]
     utility_beta_ui_z = instantiate(config_dict["utility_beta_ui_z"]).sample(
