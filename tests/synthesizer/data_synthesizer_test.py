@@ -1,5 +1,6 @@
 import jax.numpy as jnp
 from jax import random
+import numpy as np
 import pytest
 
 from retailsynth.synthesizer.config import initialize_synthetic_data_setup
@@ -334,7 +335,7 @@ def test_sample_trajectory(data_synthesizer, sample_config):
         data_synthesizer.n_product,
     )
     assert (trajectory >= 0).all()
-    assert trajectory.dtype == "int"
+    assert np.issubdtype(trajectory.dtype, np.integer)
 
     assert price_record.shape == (
         n_week,
