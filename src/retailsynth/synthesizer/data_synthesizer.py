@@ -154,17 +154,19 @@ class DataSynthesizer:
         variable_mean = numpyro.sample(
             "endogenous_mean",
             dist.HalfNormal(1),
-            sample_shape=(self.n_product,),
-            rng_key=self.random_seed,
+            sample_shape=(self.n_category,),
+            rng_key=random.PRNGKey(0),
         )
         variable_std = numpyro.sample(
             "endogenous_std",
             dist.HalfNormal(1),
-            sample_shape=(self.n_product,),
-            rng_key=self.random_seed,
+            sample_shape=(self.n_category,),
+            rng_key=random.PRNGKey(0),
         )
+        variable_mean = jnp.matmul(variable_mean, self.product_category_mapping.T)
+        variable_std = jnp.matmul(variable_std, self.product_category_mapping.T)
         w_dist = dist.TruncatedNormal(variable_mean, variable_std, low=0)
-        w = self._sample_feature(w_dist, "w")
+        w = numpyro.sample("endogenous_feature", w_dist, rng_key=random.PRNGKey(0))
         return w
 
     def _initialize_product_price(self, endogenous_feature: jnp.array) -> jnp.array:
