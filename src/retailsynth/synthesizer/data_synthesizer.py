@@ -444,6 +444,8 @@ class DataSynthesizer:
             (self.n_customer, self.n_product), "x"
         )
         x = self._sample_feature(x_dist)
+        self.choice_decision_stats["x"].append(x)
+
         error = self._sample_error(
             (self.n_customer, self.n_product), self.utility_error_distribution
         )
