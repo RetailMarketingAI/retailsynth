@@ -106,4 +106,4 @@ synthetic_data_setup:
     _target_: numpyro.distributions.LogNormal
     loc: -4
     scale: 0.05
-    
+  purchase_quantity_clip_percentile: 100

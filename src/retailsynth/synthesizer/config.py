@@ -62,6 +62,7 @@ class SyntheticParameters:
     # coefficients to generate product demand
     purchase_quantity_gamma_0i_prod: ArrayLike = None  # in shape of (n_product, )
     purchase_quantity_gamma_1i_prod: ArrayLike = None  # in shape of (n_product, )
+    purchase_quantity_clip_percentile: float = None
 
     def __post_init__(self):
         """Derive some attributes from given config."""
@@ -157,6 +158,7 @@ def initialize_synthetic_data_setup(config_dict: DictConfig) -> SyntheticParamet
     purchase_quantity_gamma_1i_prod = instantiate(
         config_dict["purchase_quantity_gamma_1i_prod"]
     ).sample(key=seed, sample_shape=(n_customer, n_product))
+    purchase_quantity_clip_percentile = config_dict['purchase_quantity_clip_percentile']
 
     return SyntheticParameters(
         n_customer=n_customer,
@@ -189,4 +191,5 @@ def initialize_synthetic_data_setup(config_dict: DictConfig) -> SyntheticParamet
         store_visit_gamma_2_store=store_visit_gamma_2_store,
         purchase_quantity_gamma_0i_prod=purchase_quantity_gamma_0i_prod,
         purchase_quantity_gamma_1i_prod=purchase_quantity_gamma_1i_prod,
+        purchase_quantity_clip_percentile=purchase_quantity_clip_percentile
     )  # type: ignore
