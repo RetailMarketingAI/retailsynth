@@ -72,6 +72,7 @@ class DataSynthesizer:
         self.purchase_quantity_gamma_1i_prod = (
             cfg_raw_data.purchase_quantity_gamma_1i_prod
         )
+        self.purchase_quantity_clip_percentile = cfg_raw_data.purchase_quantity_clip_percentile
 
         # copy of store visit score in the current step
         # so that we could use this score when computing the store visit probability in the next time step
@@ -769,6 +770,8 @@ class DataSynthesizer:
         product_demand = (
             dist.Poisson(product_demand_prob).sample(seed) + 1
         )  # (n_customer, n_product)
+        upper_bound = jnp.percentile(product_demand, self.purchase_quantity_clip_percentile)
+        product_demand = jnp.clip(product_demand, a_max=upper_bound)
         # A failed case for the following assertion statement is that we have product_demand_prob super big,
         # that we generate a "infinity" large float 64.
         # When we shifted the generated number, "infinity" + 1 would give us negative "infinity"

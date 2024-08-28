@@ -104,3 +104,4 @@ synthetic_data_setup:
     loc: 0
     scale: 0.001
     low: 0
+  purchase_quantity_clip_percentile: 100
